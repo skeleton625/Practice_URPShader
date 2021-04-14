@@ -12,11 +12,13 @@ Shader "URPTraining/URPBasic"
 		// 실수형 변수 (int, float 자료형 타입 사용 가능)
 		_SampleFloat("Sample Float", Float) = 0
 		// Texture Sampler 타입의 변수
-		_SampleTexture("Sample Texture", 2D) = "white"{}
+		_SampleTexture01("Sample Texture 01", 2D) = "white"{}
+	// Texture Sampler 타입의 변수
+	_SampleTexture02("Sample Texture 02", 2D) = "white"{}
 	}
 
 		// 메시를 랜더링 할 때, 랜더링 과정을 정의하는 부분
-	SubShader
+		SubShader
 	{
 		// SubShader의 타입을 결정
 		Tags
@@ -49,9 +51,11 @@ Shader "URPTraining/URPBasic"
 			float _SampleFloat;
 			float _SampleIntensity;
 			float4 _SampleVector;
-			float4 _SampleTexture_ST;			// _SampleTexture의 Tile, Offset 값 -> "[텍스처 변수명]_ST"
-			Texture2D _SampleTexture;
-			SamplerState sampler_SampleTexture;
+			float4 _SampleTexture01_ST;			// _SampleTexture의 Tile, Offset 값 -> "[텍스처 변수명]_ST"
+			float4 _SampleTexture02_ST;
+			Texture2D _SampleTexture01;
+			Texture2D _SampleTexture02;
+			SamplerState sampler_SampleTexture01; // _SampleTexture01 Texture2D의 보간기
 
 			// vertex buffer에서 읽어올 정보 구조체 정의
 			struct VertexInput
@@ -76,8 +80,9 @@ Shader "URPTraining/URPBasic"
 				VertexOutput o;
 				// 월드 좌표계를 모니터 좌표계로 위치 변경
 				o.vertex = TransformObjectToHClip(v.vertex.xyz);
+				o.uv = v.uv;
 				// _SampleTexture_ST의 xy는 Tile Size, zw는 Offset 값을 의미
-				o.uv = v.uv.xy * _SampleTexture_ST.xy + _SampleTexture_ST.zw;
+				// o.uv = v.uv.xy * _SampleTexture01_ST.xy + _SampleTexture01_ST.zw;
 
 				return o;
 			}
@@ -87,8 +92,15 @@ Shader "URPTraining/URPBasic"
 			// Rendering Pipeline의 Pixel Shading(Fragment Shading) 과정 함수 -> 모니터 Pixel을 찍는 과정
 			half4 frag(VertexOutput i) : SV_Target
 			{
+				float2 uv01 = i.uv.xy * _SampleTexture01_ST.xy + _SampleTexture01_ST.zw;
+				float2 uv02 = i.uv.xy * _SampleTexture02_ST.xy + _SampleTexture02_ST.zw;
+
 				// 샘플링을 통해 SampleTexture Tile, offset 조정
-				half4 color = _SampleTexture.Sample(sampler_SampleTexture, i.uv) * _SampleColor * _SampleIntensity;
+				// half4 color01 = tex2D(_SampleTexture01, uv01) -> 한 번 정의할 때마다 새 보간기 사용 ( 보간기 개수는 기기에 따라 제한되어 있음)
+				half4 color01 = _SampleTexture01.Sample(sampler_SampleTexture01, uv01) * _SampleColor * _SampleIntensity;
+				half4 color02 = _SampleTexture02.Sample(sampler_SampleTexture01, uv02) * _SampleColor * _SampleIntensity;
+
+				half4 color = color01 * color02;
 				return color;
 			}
 

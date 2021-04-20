@@ -13,8 +13,8 @@ Shader "URPTraining/URPBasic"
 		_SampleFloat("Sample Float", Float) = 0
 		// Texture Sampler 타입의 변수
 		_SampleTexture01("Sample Texture 01", 2D) = "white"{}
-	// Texture Sampler 타입의 변수
-	_SampleTexture02("Sample Texture 02", 2D) = "white"{}
+		// Texture Sampler 타입의 변수
+		_SampleTexture02("Sample Texture 02", 2D) = "white"{}
 	}
 
 		// 메시를 랜더링 할 때, 랜더링 과정을 정의하는 부분
